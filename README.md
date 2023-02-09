@@ -1,4 +1,4 @@
-# WhatsMyIP
+# whatsmyip
 
 This tool will return your current public IP address by checking multiple sources.
 
