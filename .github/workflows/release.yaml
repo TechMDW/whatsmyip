@@ -1,35 +1,33 @@
-name: release
+name: releaser
+
 on:
   push:
+    # run only against tags
     tags:
-      - v*
+      - "*"
 
-env:
-  GO_VERSION: 1.19
+permissions:
+  contents: write
+  # packages: write
+  # issues: write
 
 jobs:
-  release:
-    name: release
+  releaser:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
         with:
           fetch-depth: 0
+      - run: git fetch --force --tags
       - uses: actions/setup-go@v3
         with:
-          go-version: ${{ env.GO_VERSION }}
-          check-latest: true
-      - uses: actions/cache@v3
-        if: ${{ !env.ACT }}
+          go-version: ">=1.20.0"
+          cache: true
+      - uses: goreleaser/goreleaser-action@v4
         with:
-          path: ~/go/pkg/mod
-          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
-          restore-keys: |
-            ${{ runner.os }}-go-
-      - name: GoReleaser
-        uses: goreleaser/goreleaser-action@v3
-        with:
+          # either 'goreleaser' (default) or 'goreleaser-pro':
+          distribution: goreleaser
           version: latest
-          args: release --rm-dist
+          args: release --clean
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
