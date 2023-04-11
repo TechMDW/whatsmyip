@@ -14,7 +14,7 @@ func main() {
 		fmt.Println("No IPs found")
 		return
 	} else if len(ips) == 1 {
-		fmt.Println(ips[0].Ip)
+		fmt.Println(ips[0].Ipv4)
 		return
 	}
 
@@ -23,6 +23,6 @@ func main() {
 	})
 
 	for _, ip := range ips {
-		fmt.Printf("IP: %s | Certainty: %.1f%%\n", ip.Ip, ip.Certainty)
+		fmt.Printf("IP: %s | Certainty: %.1f%%\n", ip.Ipv4, ip.Certainty)
 	}
 }

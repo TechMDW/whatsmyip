@@ -7,8 +7,8 @@ import (
 )
 
 type Ip struct {
-	// Ip is the IP address.
-	Ip string
+	// Ipv4 is the IP address.
+	Ipv4 string
 
 	// Certainty is the percentage of websites that returned the same IP.
 	//
@@ -23,18 +23,20 @@ type Ip struct {
 
 // Retrieves the IP address by fetching the IP from a list of websites.
 func GetIp() (data []Ip) {
-	ch := make(chan bool, 6)
+	ch := make(chan struct{}, 6)
 
 	ips := make([]IpFetch, len(Websites))
 
 	wg := sync.WaitGroup{}
+
+	found := 0
 
 	for i, website := range Websites {
 		wg.Add(1)
 		go func(website string, i int) {
 			defer wg.Done()
 
-			ch <- true
+			ch <- struct{}{}
 			defer func() { <-ch }()
 
 			context, cancel := context.WithDeadline(context.Background(), time.Now().Add(10*time.Second))
@@ -48,14 +50,7 @@ func GetIp() (data []Ip) {
 					case <-context.Done():
 						return
 					default:
-						found := 0
-						for _, ip := range ips {
-							if ip.Ip != "" {
-								found++
-							}
-						}
-
-						if time.Since(startTime) > 5*time.Second && found > 4 {
+						if (time.Since(startTime) > 5*time.Second && found > 3) || found > 5 {
 							cancel()
 							return
 						}
@@ -70,6 +65,8 @@ func GetIp() (data []Ip) {
 				return
 			}
 
+			found++
+
 			ips[i] = ip
 		}(website, i)
 	}
@@ -80,12 +77,12 @@ func GetIp() (data []Ip) {
 	ipCount := make(map[string]int)
 	ipEmpty := 0
 	for _, ip := range ips {
-		if ip.Ip == "" {
+		if ip.Ipv4 == "" {
 			ipEmpty++
 			continue
 		}
 
-		ipCount[ip.Ip]++
+		ipCount[ip.Ipv4]++
 	}
 
 	// If all the IPs are the same, return that IP
@@ -93,7 +90,7 @@ func GetIp() (data []Ip) {
 		for ip := range ipCount {
 			if ip != "" {
 				httpInfo := getRequestInfoFromIp(ip, &ips)
-				data = append(data, Ip{Ip: ip, Certainty: 100, RequestInfo: httpInfo})
+				data = append(data, Ip{Ipv4: ip, Certainty: 100, RequestInfo: httpInfo})
 				return
 			}
 		}
@@ -104,7 +101,7 @@ func GetIp() (data []Ip) {
 		certainty := float64(count*100) / float64(len(Websites)-ipEmpty)
 
 		httpInfo := getRequestInfoFromIp(ip, &ips)
-		data = append(data, Ip{Ip: ip, Certainty: certainty, RequestInfo: httpInfo})
+		data = append(data, Ip{Ipv4: ip, Certainty: certainty, RequestInfo: httpInfo})
 	}
 
 	return
@@ -115,7 +112,7 @@ func GetIp() (data []Ip) {
 // Returns the http information for all websites that returned the passed in IP.
 func getRequestInfoFromIp(ip string, ips *[]IpFetch) (data []IpFetch) {
 	for _, website := range *ips {
-		if website.Ip == ip {
+		if website.Ipv4 == ip {
 			data = append(data, website)
 		}
 	}

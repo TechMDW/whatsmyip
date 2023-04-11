@@ -8,7 +8,7 @@ import (
 )
 
 type IpFetch struct {
-	Ip      string
+	Ipv4    string
 	Website string
 	Error   error
 	Http    HttpInfo
@@ -74,9 +74,9 @@ func IpWebScraper(ctx context.Context, url string) (IpFetch, error) {
 		}, ErrInvalidStatusCode
 	}
 
-	ip := ipRegex.Find(body)
+	ipv4 := ipv4Regex.Find(body)
 
-	if ip == nil {
+	if ipv4 == nil {
 		return IpFetch{
 			Website: url,
 			Error:   ErrInvalidIp,
@@ -91,7 +91,7 @@ func IpWebScraper(ctx context.Context, url string) (IpFetch, error) {
 	}
 
 	return IpFetch{
-		Ip:      string(ip),
+		Ipv4:    string(ipv4),
 		Website: url,
 		Error:   nil,
 		Http: HttpInfo{
