@@ -1,6 +1,8 @@
 package main
 
 import (
+	"encoding/json"
+	"flag"
 	"fmt"
 	"sort"
 
@@ -8,7 +10,33 @@ import (
 )
 
 func main() {
+	jsonOutput := flag.Bool("json", false, "Output in JSON format")
+	jsonRawOutput := flag.Bool("json-raw", false, "Output in JSON format without indentation")
+	flag.Parse()
+
 	ips := whatsmyip.GetIp()
+
+	if *jsonRawOutput {
+		json, err := json.Marshal(ips)
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
+
+		fmt.Println(string(json))
+		return
+	}
+
+	if *jsonOutput {
+		json, err := json.MarshalIndent(ips, "", "  ")
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
+
+		fmt.Println(string(json))
+		return
+	}
 
 	if len(ips) == 0 {
 		fmt.Println("No IPs found")
